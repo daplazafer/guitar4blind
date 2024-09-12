@@ -43,12 +43,15 @@ function transcribe(tablature) {
 
 function processBlock(block) {
   const maxLength = Math.max(...block.map((line) => line.length));
-  const matrix = block.map((line) =>
+  let matrix = block.map((line) =>
     line
       .replace(/^[^\d-]+/, "")
       .padEnd(maxLength, " ")
       .split("")
   );
+
+  // Preprocess the block to handle two-digit frets
+  matrix = preprocessBlockForDoubleDigits(matrix);
 
   const result = [];
   let pendingAdornment = null;
@@ -64,20 +67,12 @@ function processBlock(block) {
         if (/\d/.test(currentChar)) {
           let fret = currentChar;
 
-          if (
-            columnIndex + 1 < matrix[stringIndex].length &&
-            /\d/.test(matrix[stringIndex][columnIndex + 1])
-          ) {
-            fret += matrix[stringIndex][columnIndex + 1];
-            matrix[stringIndex][columnIndex + 1] = "x";
-          }
-
           fret = fret === "0" ? "open" : `fret ${fret}`;
           let noteString = `string ${stringIndex + 1} ${fret}`;
 
           if (pendingAdornment) {
             if (pendingAdornment === "tapping") {
-              noteString = "(tapping) " + noteString;
+              noteString += " (tapping-release)";
             } else if (pendingAdornment === "hammer-on") {
               noteString = "(hammer-on) " + noteString;
             }
@@ -86,6 +81,7 @@ function processBlock(block) {
 
           notesInColumn.push(noteString);
 
+          // Check if there is an adornment
           if (
             columnIndex + 1 < matrix[stringIndex].length &&
             /[pr~bt/\\]/.test(matrix[stringIndex][columnIndex + 1])
@@ -112,6 +108,34 @@ function processBlock(block) {
   }
 
   return result;
+}
+
+function preprocessBlockForDoubleDigits(matrix) {
+  for (let columnIndex = 0; columnIndex < matrix[0].length - 1; columnIndex++) {
+    let shouldRemoveNextCell = false;
+
+    // Verificar todas las cuerdas en la columna actual
+    for (let stringIndex = 0; stringIndex < matrix.length; stringIndex++) {
+      if (
+        /\d/.test(matrix[stringIndex][columnIndex]) &&
+        /\d/.test(matrix[stringIndex][columnIndex + 1])
+      ) {
+        // Combina los dos dígitos
+        matrix[stringIndex][columnIndex] +=
+          matrix[stringIndex][columnIndex + 1];
+        shouldRemoveNextCell = true;
+      }
+    }
+
+    // Si encontramos una nota de dos dígitos, eliminamos la siguiente celda para todas las cuerdas
+    if (shouldRemoveNextCell) {
+      for (let stringIndex = 0; stringIndex < matrix.length; stringIndex++) {
+        matrix[stringIndex].splice(columnIndex + 1, 1); // Elimina la celda en la columna siguiente
+      }
+    }
+  }
+
+  return matrix;
 }
 
 function detectAdornment(adornment) {
