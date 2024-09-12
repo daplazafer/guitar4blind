@@ -2,5 +2,18 @@
   "title": "Text Reader",
   "placeholder": "Type your text here...",
   "button": "Read Aloud",
-  "alert": "Please enter some text in the text area."
+  "alert": "Please enter some text in the text area.",
+
+  "fret": "fret",
+  "string": "string",
+  "open": "open",
+  "pull-off": "and pull-off",
+  "release": "and release",
+  "hammer-on": "hammer-on at",
+  "tapping-hold": "hold for tapping at",
+  "tapping-release": "with tapping",
+  "vibrato": "with vibrato",
+  "bending": "and bend",
+  "slide-up": "and slide up",
+  "slide-down": "and slide down"
 }

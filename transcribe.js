@@ -160,9 +160,9 @@ function detectAdornment(adornment) {
     case "b":
       return "bending";
     case "/":
-      return "slide up";
+      return "slide-up";
     case "\\":
-      return "slide down";
+      return "slide-down";
     default:
       return "";
   }
