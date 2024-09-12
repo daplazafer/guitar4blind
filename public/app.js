@@ -1,41 +1,28 @@
 import { transcribe } from "./transcribe.js";
+import { translatePlaceholders, readLine } from "./i18n.js";
 
-class App {
-  constructor() {
-    this.transcribeButton = document.getElementById("transcribe-button");
-    this.textToRead = document.getElementById("text-to-read");
-    this.transcribedTextArea = document.getElementById("transcribed");
+let transcribed = [[]];
+let block = 0;
+let line = 0;
 
-    this.initialize();
+document.getElementById("transcribe-button").addEventListener("click", () => {
+  const tablature = document.getElementById("tab-to-transcribe").value;
+  transcribed = transcribe(tablature);
+  block = 0;
+  line = 0;
+  console.log(transcribed);
+});
+
+document.getElementById("read-button").addEventListener("click", () => {
+  if (transcribed.length > 0) {
+    console.log(transcribed);
+    let translated = translatePlaceholders(transcribed[block][line]);
+    readLine(translated);
   }
-
-  initialize() {
-    this.transcribeButton.addEventListener("click", () =>
-      this.handleTranscribe()
-    );
+  line++;
+  if (line == transcribed[block].length) {
+    line = 0;
+    block++;
   }
-
-  handleTranscribe() {
-    const tablature = this.textToRead.value;
-
-    if (tablature.trim() !== "") {
-      const transcribedText = transcribe(tablature);
-      console.log("Transcribed Text:", transcribedText);
-
-      if (Array.isArray(transcribedText)) {
-        this.transcribedTextArea.value = transcribedText;
-        console.log("Transcription complete:", transcribedText);
-      } else {
-        console.error(
-          "Transcription failed: transcribe function did not return an array."
-        );
-      }
-    } else {
-      console.log("No tablature to transcribe.");
-    }
-  }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  new App();
+  console.log(line);
 });

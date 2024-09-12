@@ -14,10 +14,23 @@ function loadLanguage(lang) {
 function applyTranslations() {
   document.querySelector("h1").textContent =
     translations.title || "Default Title";
-  document.getElementById("text-to-read").placeholder =
+  document.getElementById("tab-to-transcribe").placeholder =
     translations.placeholder || "Type text here...";
   document.getElementById("read-button").textContent =
     translations.button || "Read";
+  document.getElementById("transcribe-button").textContent =
+    translations.transcribe || "Read";
+}
+
+export function translatePlaceholders(transcribedText) {
+  let translatedText = transcribedText;
+
+  for (const [key, value] of Object.entries(translations)) {
+    const regex = new RegExp(`\\{${key}\\}`, "g");
+    translatedText = translatedText.replace(regex, value);
+  }
+
+  return translatedText;
 }
 
 function fetchAvailableLanguages() {
@@ -59,15 +72,12 @@ document.addEventListener("DOMContentLoaded", () => {
   fetchAvailableLanguages();
 });
 
-document.getElementById("read-button").addEventListener("click", () => {
-  const textArea = document.getElementById("text-to-read");
-  const text = textArea.value;
-  const selectedLang =
-    document.getElementById("language-selector").value || getUserLanguage();
-
-  if (text.trim() !== "") {
-    const utterance = new SpeechSynthesisUtterance(text);
+export function readLine(line) {
+  if (line.trim() !== "") {
+    const selectedLang =
+      document.getElementById("language-selector").value || getUserLanguage();
+    const utterance = new SpeechSynthesisUtterance(line);
     utterance.lang = selectedLang;
     speechSynthesis.speak(utterance);
   }
-});
+}
