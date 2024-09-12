@@ -33,7 +33,6 @@ function transcribe(tablature) {
     }
 
     if (block.length > 0) {
-      output.push(`Block ${blockNumber++}:`);
       output.push(processBlock(block));
     }
   }
@@ -65,15 +64,14 @@ function processBlock(block) {
 
         if (/\d/.test(currentChar)) {
           let fret = currentChar;
-
-          fret = fret === "0" ? "open" : `fret ${fret}`;
-          let noteString = `string ${stringIndex + 1} ${fret}`;
+          fret = fret === "0" ? "{open}" : `{fret} ${fret}`;
+          let noteString = `{string} ${stringIndex + 1} ${fret}`;
 
           if (pendingAdornment) {
             if (pendingAdornment === "tapping") {
-              noteString += " (tapping-release)";
+              noteString += " {tapping-release}";
             } else if (pendingAdornment === "hammer-on") {
-              noteString = "(hammer-on) " + noteString;
+              noteString = "{hammer-on} " + noteString;
             }
             pendingAdornment = null;
           }
@@ -86,9 +84,9 @@ function processBlock(block) {
               matrix[stringIndex][columnIndex + 1]
             );
             if (adornment === "tapping") {
-              noteString = "(tapping-hold) " + noteString;
+              noteString = "{tapping-hold} " + noteString;
             } else {
-              adornmentsInColumn.push(adornment);
+              adornmentsInColumn.push(`{${adornment}}`);
             }
           }
 
@@ -103,7 +101,7 @@ function processBlock(block) {
       const adornedNoteString =
         notesInColumn.join(", ") +
         (adornmentsInColumn.length > 0
-          ? ` (${adornmentsInColumn.join(", ")})`
+          ? ` ${adornmentsInColumn.join(", ")}`
           : "");
       result.push(adornedNoteString + ";");
     }
