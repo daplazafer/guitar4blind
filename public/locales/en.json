@@ -1,0 +1,6 @@
+{
+  "title": "Text Reader",
+  "placeholder": "Type your text here...",
+  "button": "Read Aloud",
+  "alert": "Please enter some text in the text area."
+}

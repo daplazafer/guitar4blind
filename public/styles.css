@@ -1,0 +1,19 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+textarea {
+  width: 100%;
+  font-size: 16px;
+}
+
+button {
+  font-size: 16px;
+  padding: 10px;
+}
+
+#language-select {
+  margin-top: 20px;
+  font-size: 16px;
+}
