@@ -1,15 +1,17 @@
+// Detect the number of strings based on the first character of the line
 function detectStringCount(line) {
   const firstChar = line.trim()[0];
 
   if (/[eE]/.test(firstChar)) return 6; // Standard 6-string guitar
   if (/[bB]/.test(firstChar)) return 7; // 7-string guitar
-  if (/[fF]/.test(firstChar)) return 8; // 8-string guitar (often with F# or B strings)
+  if (/[fF]/.test(firstChar)) return 8; // 8-string guitar
   if (/[GD]/.test(firstChar)) return 4; // 4-string bass
-  if (/^[BA]/.test(firstChar)) return 5; // 5-string bass (with B and A as lowest strings)
+  if (/^[BA]/.test(firstChar)) return 5; // 5-string bass
 
   return 6;
 }
 
+// Main function to transcribe the tablature
 function transcribe(tablature) {
   const lines = tablature
     .split("\n")
@@ -22,8 +24,8 @@ function transcribe(tablature) {
   const output = [];
 
   let i = 0;
-  let blockNumber = 1;
 
+  // Process blocks of tablature based on the number of strings
   while (i < lines.length) {
     const block = [];
     const stringCount = detectStringCount(lines[i]);
@@ -33,13 +35,14 @@ function transcribe(tablature) {
     }
 
     if (block.length > 0) {
-      output.push(processBlock(block));
+      output.push(processBlock(block)); // Process each block
     }
   }
 
   return output;
 }
 
+// Process each block of tablature and detect notes and adornments
 function processBlock(block) {
   const maxLength = Math.max(...block.map((line) => line.length));
   let matrix = block.map((line) =>
@@ -68,6 +71,7 @@ function processBlock(block) {
           let noteString = `{string} ${stringIndex + 1} ${fret}`;
 
           if (pendingAdornment) {
+            // Handle pending adornments like tapping or hammer-on
             if (pendingAdornment === "tapping") {
               noteString += " {tapping-release}";
             } else if (pendingAdornment === "hammer-on") {
@@ -76,6 +80,7 @@ function processBlock(block) {
             pendingAdornment = null;
           }
 
+          // Detect adornments after a note
           if (
             columnIndex + 1 < matrix[stringIndex].length &&
             /[pr~bt/\\]/.test(matrix[stringIndex][columnIndex + 1])
@@ -92,6 +97,7 @@ function processBlock(block) {
 
           notesInColumn.push(noteString);
         } else if (/[ht]/.test(currentChar)) {
+          // Set pending adornments (hammer-on or tapping) for the next note
           pendingAdornment = detectAdornment(currentChar);
         }
       }
@@ -110,10 +116,12 @@ function processBlock(block) {
   return result;
 }
 
+// Handle two-digit frets by combining digits and adjusting the matrix
 function preprocessBlockForDoubleDigits(matrix) {
   for (let columnIndex = 0; columnIndex < matrix[0].length - 1; columnIndex++) {
     let shouldRemoveNextCell = false;
 
+    // Check if the current position has a two-digit fret
     for (let stringIndex = 0; stringIndex < matrix.length; stringIndex++) {
       if (
         /\d/.test(matrix[stringIndex][columnIndex]) &&
@@ -125,6 +133,7 @@ function preprocessBlockForDoubleDigits(matrix) {
       }
     }
 
+    // Remove the next cell for all strings if a two-digit fret was found
     if (shouldRemoveNextCell) {
       for (let stringIndex = 0; stringIndex < matrix.length; stringIndex++) {
         matrix[stringIndex].splice(columnIndex + 1, 1);
@@ -135,6 +144,7 @@ function preprocessBlockForDoubleDigits(matrix) {
   return matrix;
 }
 
+// Detect specific adornments in the tablature
 function detectAdornment(adornment) {
   switch (adornment) {
     case "p":
@@ -157,21 +167,3 @@ function detectAdornment(adornment) {
       return "";
   }
 }
-
-const tablatureText = `
-    e|-----------------------------------|
-    b|-----------------------------------|
-    g|-----(2)h4-0---0-------------------|
-    D|-10----------0----4t2-----(2)h4~~--|
-    A|-10--------------------2-----------|
-    E|-8---------------------------------|
-    
-    e|-10-8b7------8r7---------------7~--|
-    b|--------h10-------10r8\\7/8p10------|
-    g|-----------------------------------|
-    D|-----------------------------------|
-    A|-----------------------------------|
-    E|-----------------------------------|
-    `;
-
-console.log(transcribe(tablatureText));
