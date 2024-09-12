@@ -1,43 +1,77 @@
+function detectStringCount(line) {
+  const firstChar = line.trim()[0];
+
+  if (/[eE]/.test(firstChar)) return 6; // Standard 6-string guitar
+  if (/[bB]/.test(firstChar)) return 7; // 7-string guitar
+  if (/[fF]/.test(firstChar)) return 8; // 8-string guitar (often with F# or B strings)
+  if (/[GD]/.test(firstChar)) return 4; // 4-string bass
+  if (/^[BA]/.test(firstChar)) return 5; // 5-string bass (with B and A as lowest strings)
+
+  return 6;
+}
+
 function transcribe(tablature) {
   const lines = tablature
     .split("\n")
     .filter(
-      (line) => /^[ebgdaDAE]\|[-]/.test(line.trim()) || /^\|-/.test(line.trim())
+      (line) =>
+        /^[EBGDAebgda]\|[-]|['F#']/.test(line.trim()) ||
+        /^\|-/.test(line.trim())
     );
+
   const output = [];
 
-  for (let i = 0; i < lines.length; i += 6) {
-    const block = lines.slice(i, i + 6);
-    output.push(`Block ${Math.floor(i / 6) + 1}:`);
-    output.push(processBlock(block));
+  let i = 0;
+  while (i < lines.length) {
+    const block = [];
+
+    const stringCount = detectStringCount(lines[i]);
+
+    for (let j = 0; j < stringCount && i < lines.length; j++, i++) {
+      block.push(lines[i]);
+    }
+
+    if (block.length > 0) {
+      output.push(`Block ${output.length + 1}:`);
+      output.push(processBlock(block));
+    }
   }
 
   return output.join("\n");
 }
 
 function processBlock(block) {
-  const matrix = block.map((line) => line.replace(/^[^\d-]+/, "").split(""));
+  const maxLength = Math.max(...block.map((line) => line.length));
+  const matrix = block.map((line) =>
+    line
+      .replace(/^[^\d-]+/, "")
+      .padEnd(maxLength, " ")
+      .split("")
+  );
+
   const result = [];
 
-  for (let columnIndex = 0; columnIndex < matrix[0].length; columnIndex++) {
+  for (let columnIndex = 0; columnIndex < maxLength; columnIndex++) {
     let notesInColumn = [];
 
-    for (let stringIndex = 5; stringIndex >= 0; stringIndex--) {
-      let currentChar = matrix[stringIndex][columnIndex];
+    for (let stringIndex = block.length - 1; stringIndex >= 0; stringIndex--) {
+      if (matrix[stringIndex] && matrix[stringIndex][columnIndex]) {
+        let currentChar = matrix[stringIndex][columnIndex];
 
-      if (/\d/.test(currentChar)) {
-        let fret = currentChar;
+        if (/\d/.test(currentChar)) {
+          let fret = currentChar;
 
-        if (
-          columnIndex + 1 < matrix[stringIndex].length &&
-          /\d/.test(matrix[stringIndex][columnIndex + 1])
-        ) {
-          fret += matrix[stringIndex][columnIndex + 1];
-          matrix[stringIndex][columnIndex + 1] = "x";
+          if (
+            columnIndex + 1 < matrix[stringIndex].length &&
+            /\d/.test(matrix[stringIndex][columnIndex + 1])
+          ) {
+            fret += matrix[stringIndex][columnIndex + 1];
+            matrix[stringIndex][columnIndex + 1] = "x";
+          }
+
+          fret = fret === "0" ? "open" : `fret ${fret}`;
+          notesInColumn.push(`string ${stringIndex + 1} ${fret}`);
         }
-
-        fret = fret === "0" ? "open" : `fret ${fret}`;
-        notesInColumn.push(`string ${stringIndex + 1} ${fret}`);
       }
     }
 
@@ -49,7 +83,7 @@ function processBlock(block) {
   return result.join("\n");
 }
 
-const tablatureText1 = `
+const tablatureText = `
   e|-----------------------------------|
   b|-----------------------------------|
   g|-----(2)h4-0---0-------------------|
@@ -63,44 +97,6 @@ const tablatureText1 = `
   D|-----------------------------------|
   A|-----------------------------------|
   E|-----------------------------------|
-  `;
-
-const tablatureText = `
-  i pretty much play the riffs the same as every other version on here
-  so here's my way of playing Kirk Hammet's solo.
-  
-  e|-17-12------------12-17-12------------12-17-12------------12--|
-  b|--------13-12-13------------13-12-13------------13-12-13------|
-  g|--------------------------------------------------------------|
-  D|--------------------------------------------------------------|
-  A|--------------------------------------------------------------|
-  E|--------------------------------------------------------------|
-  
-                                              (whammy bar)
-  e|-----------17p15p14--------------------------------/\/\/--|
-  b|-17p15p14------------17p15p14---------------------/-------|
-  g|--------------------------------16-14~~--<6>\----/--------|
-  D|---------------------------------------------\/\/---------|
-  A|----------------------------------------------------------|
-  E|----------------------------------------------------------|
-  
-  /\(vigorous whammy bar dive)
-  e|-22b24/--\/\--------------------------------------|
-  b|------------\/\-----------------------------------|
-  g|---------------\/\--------------------------------|
-  D|------------------\/\-----------------------------|
-  A|---------------------\/\--------------------------|
-  E|------------------------\/\-----------------------|
-  
-  ************************************
-  
-  | p  Pull-off
-  | r  Release
-  | b  Bend
-  | /  Slide up
-  | ~  Vibrato
-  
-  ************************************
   `;
 
 console.log(transcribe(tablatureText));
