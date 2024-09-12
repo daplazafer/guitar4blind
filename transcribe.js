@@ -22,9 +22,10 @@ function transcribe(tablature) {
   const output = [];
 
   let i = 0;
+  let blockNumber = 1; // Add blockNumber to keep track of block numbering
+
   while (i < lines.length) {
     const block = [];
-
     const stringCount = detectStringCount(lines[i]);
 
     for (let j = 0; j < stringCount && i < lines.length; j++, i++) {
@@ -32,7 +33,7 @@ function transcribe(tablature) {
     }
 
     if (block.length > 0) {
-      output.push(`Block ${output.length + 1}:`);
+      output.push(`Block ${blockNumber++}:`); // Increment block number after adding block
       output.push(processBlock(block));
     }
   }
@@ -76,9 +77,9 @@ function processBlock(block) {
 
           if (pendingAdornment) {
             if (pendingAdornment === "tapping") {
-              noteString += " (tapping-release)";
-            } else {
-              noteString += ` (${pendingAdornment})`;
+              noteString = "(tapping) " + noteString;
+            } else if (pendingAdornment === "hammer-on") {
+              noteString = "(hammer-on) " + noteString;
             }
             pendingAdornment = null;
           }
@@ -137,19 +138,19 @@ function detectAdornment(adornment) {
 }
 
 const tablatureText = `
-  e|-----------------------------------|
-  b|-----------------------------------|
-  g|-----(2)h4-0---0-------------------|
-  D|-10----------0----4t2-----(2)h4~~--|
-  A|-10--------------------2-----------|
-  E|-8---------------------------------|
-  
-  e|-10-8b7------8r7---------------7~--|
-  b|--------h10-------10r8\\7/8p10------|
-  g|-----------------------------------|
-  D|-----------------------------------|
-  A|-----------------------------------|
-  E|-----------------------------------|
-  `;
+    e|-----------------------------------|
+    b|-----------------------------------|
+    g|-----(2)h4-0---0-------------------|
+    D|-10----------0----4t2-----(2)h4~~--|
+    A|-10--------------------2-----------|
+    E|-8---------------------------------|
+    
+    e|-10-8b7------8r7---------------7~--|
+    b|--------h10-------10r8\\7/8p10------|
+    g|-----------------------------------|
+    D|-----------------------------------|
+    A|-----------------------------------|
+    E|-----------------------------------|
+    `;
 
 console.log(transcribe(tablatureText));
