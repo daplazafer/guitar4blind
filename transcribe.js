@@ -37,7 +37,7 @@ function transcribe(tablature) {
     }
   }
 
-  return output.join("\n");
+  return output;
 }
 
 function processBlock(block) {
@@ -50,9 +50,11 @@ function processBlock(block) {
   );
 
   const result = [];
+  let pendingAdornment = null;
 
   for (let columnIndex = 0; columnIndex < maxLength; columnIndex++) {
     let notesInColumn = [];
+    let adornmentsInColumn = [];
 
     for (let stringIndex = block.length - 1; stringIndex >= 0; stringIndex--) {
       if (matrix[stringIndex] && matrix[stringIndex][columnIndex]) {
@@ -70,29 +72,80 @@ function processBlock(block) {
           }
 
           fret = fret === "0" ? "open" : `fret ${fret}`;
-          notesInColumn.push(`string ${stringIndex + 1} ${fret}`);
+          let noteString = `string ${stringIndex + 1} ${fret}`;
+
+          if (pendingAdornment) {
+            if (pendingAdornment === "tapping") {
+              noteString += " (tapping-release)";
+            } else {
+              noteString += ` (${pendingAdornment})`;
+            }
+            pendingAdornment = null;
+          }
+
+          notesInColumn.push(noteString);
+
+          if (
+            columnIndex + 1 < matrix[stringIndex].length &&
+            /[pr~bt/\\]/.test(matrix[stringIndex][columnIndex + 1])
+          ) {
+            const adornment = detectAdornment(
+              matrix[stringIndex][columnIndex + 1]
+            );
+            adornmentsInColumn.push(adornment);
+          }
+        } else if (/[ht]/.test(currentChar)) {
+          pendingAdornment = detectAdornment(currentChar);
         }
       }
     }
 
     if (notesInColumn.length > 0) {
-      result.push(notesInColumn.join(", ") + ";");
+      const adornedNoteString =
+        notesInColumn.join(", ") +
+        (adornmentsInColumn.length > 0
+          ? ` (${adornmentsInColumn.join(", ")})`
+          : "");
+      result.push(adornedNoteString + ";");
     }
   }
 
-  return result.join("\n");
+  return result;
+}
+
+function detectAdornment(adornment) {
+  switch (adornment) {
+    case "p":
+      return "pull-off";
+    case "r":
+      return "release";
+    case "h":
+      return "hammer-on";
+    case "t":
+      return "tapping";
+    case "~":
+      return "vibrato";
+    case "b":
+      return "bending";
+    case "/":
+      return "slide up";
+    case "\\":
+      return "slide down";
+    default:
+      return "";
+  }
 }
 
 const tablatureText = `
   e|-----------------------------------|
   b|-----------------------------------|
   g|-----(2)h4-0---0-------------------|
-  D|-10----------0----4-2-----(2)h4~~--|
+  D|-10----------0----4t2-----(2)h4~~--|
   A|-10--------------------2-----------|
   E|-8---------------------------------|
   
   e|-10-8b7------8r7---------------7~--|
-  b|--------h10-------10r8\\7/8-10------|
+  b|--------h10-------10r8\\7/8p10------|
   g|-----------------------------------|
   D|-----------------------------------|
   A|-----------------------------------|
