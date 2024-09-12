@@ -12,7 +12,7 @@ function detectStringCount(line) {
 }
 
 // Main function to transcribe the tablature
-function transcribe(tablature) {
+export function transcribe(tablature) {
   const lines = tablature
     .split("\n")
     .filter(

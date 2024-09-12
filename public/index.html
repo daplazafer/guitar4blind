@@ -6,13 +6,20 @@
     <title>Internationalization Example</title>
     <link rel="stylesheet" href="styles.css" />
     <script defer src="i18n.js"></script>
+    <script type="module" src="transcribe.js"></script>
+    <script type="module" src="app.js"></script>
   </head>
   <body>
     <h1></h1>
     <textarea id="text-to-read" placeholder="Type text here..."></textarea>
     <button id="read-button">Read</button>
+    <button id="transcribe-button">Transcribe</button>
     <select id="language-selector">
       <!-- Options will be populated dynamically -->
     </select>
+
+    <!-- Hidden input fields -->
+    <textarea id="transcribed" value=""></textarea>
+    <textarea id="translated" value=""></textarea>
   </body>
 </html>
